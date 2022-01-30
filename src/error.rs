@@ -17,4 +17,10 @@ pub enum ContractError {
 
     #[error("Escrow not expired")]
     NotExpired {},
+
+    #[error("Balance must, be greater than zero")]
+    ZeroBalance {},
+
+    #[error("escrow id already in use")]
+    IdAlreadyExists {},
 }
