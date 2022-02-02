@@ -1,4 +1,3 @@
 /target
-**/*.rs.bk
-*.iml
-.idea
+/artifacts
+Cargo.lock

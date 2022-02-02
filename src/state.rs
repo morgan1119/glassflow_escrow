@@ -1,4 +1,4 @@
-use cosmwasm_std::{ Env, Storage, CanonicalAddr, Coin, StdResult, Response, Order};
+use cosmwasm_std::{ Env, Storage, Coin, StdResult, Response, Order};
 use cosmwasm_storage::{bucket_read, bucket, prefixed, ReadonlyBucket};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -11,9 +11,9 @@ const PREFIX_ESCROW: &[u8] = b"liability";
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Escrow {
-    pub arbiter: CanonicalAddr,
-    pub recipient: CanonicalAddr,
-    pub source: CanonicalAddr,
+    pub arbiter: String,
+    pub recipient: String,
+    pub source: String,
     pub end_height: Option<u64>,
     pub end_time: Option<u64>,
     pub balance: Vec<Coin>,
@@ -74,16 +74,16 @@ pub fn escrows_remove(
     Ok(Response::default())
 }
 
-pub fn all_escrow_ids(
-    storage: &dyn Storage,
-)  -> StdResult<Vec<String>> {
-    let escrow_bucket: ReadonlyBucket<String> = bucket_read(storage, PREFIX_ESCROW);
+// pub fn all_escrow_ids(
+//     storage: &dyn Storage,
+// )  -> Result<Vec<String>, ContractError> {
+//     let escrow_bucket: ReadonlyBucket<String> = bucket_read(storage, PREFIX_ESCROW);
 
-    escrow_bucket    
-        .range(None, None, Order::Ascending)
-        .map(| elem| {
-            let (k, _) = elem?;
-            Ok(String::from_utf8(k).unwrap())
-        })
-        .collect()
-}
+//     escrow_bucket    
+//         .range(None, None, Order::Ascending)
+//         .map(| elem| {
+//             let (k, _) = elem?;
+//             Ok(String::from_utf8(k).unwrap())
+//         })
+//         .collect()
+// }

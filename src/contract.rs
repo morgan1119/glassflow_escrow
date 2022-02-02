@@ -4,7 +4,7 @@ use cosmwasm_std::{
 
 use crate::error::ContractError;
 use crate::msg::{CreateMsg, ExecuteMsg, InstantiateMsg, DetailsResponse, QueryMsg, ListResponse};
-use crate::state::{Escrow, escrows_read, escrows_update, escrows_remove, escrows_save, all_escrow_ids};
+use crate::state::{Escrow, escrows_read, escrows_update, escrows_remove, escrows_save};
 // use cw20::{Balance, Cw20ReceiveMsg, Cw20Coin, Cw20CoinVerified};
 use cw2::set_contract_version;
 
@@ -48,7 +48,7 @@ pub fn query(
 ) -> StdResult<Binary> {
     match msg {
         QueryMsg::Details { id } => to_binary(&query_details(deps, id)?),
-        QueryMsg::List {} => to_binary(&query_list(deps)?),
+        // QueryMsg::List {} => to_binary(&query_list(deps)?),
     }
 }
 
@@ -60,7 +60,7 @@ fn try_approve(
 ) -> Result<Response, ContractError> {
     let escrow = escrows_read( deps.storage, &id)?;
 
-    if  escrow.arbiter != deps.api.addr_canonicalize(&info.sender.as_str())? {
+    if  escrow.arbiter != info.sender.as_str() {
         return Err(ContractError::Unauthorized {});
     }   
     else if escrow.is_expired(&env) {   // throws error if state is expired
@@ -70,9 +70,8 @@ fn try_approve(
         });
     } else {
         escrows_remove(deps.storage, &id)?;  // remove the escrow contract because it is no longer needed
-
         // send tokens to the seller
-        Ok(send_tokens(deps.api.addr_humanize(&escrow.recipient)?, escrow.balance))
+        Ok(send_tokens(Addr::unchecked(escrow.recipient), escrow.balance))
     }
 }
 
@@ -82,14 +81,14 @@ fn try_refund(
     id: String
 ) -> Result<Response, ContractError> {
     let escrow = escrows_read( deps.storage, &id)?;
-
-    if deps.api.addr_canonicalize(&info.sender.as_str())? != escrow.arbiter
+    
+    if info.sender != escrow.arbiter
     {
         return Err(ContractError::Unauthorized {});
     } else {
         escrows_remove(deps.storage, &id)?;  // remove the escrow contract because it is no longer needed
 
-        Ok(send_tokens(deps.api.addr_humanize(&escrow.recipient)?, escrow.balance))
+        Ok(send_tokens(Addr::unchecked(escrow.recipient), escrow.balance))
     }
 }
 
@@ -120,9 +119,9 @@ pub fn try_create(
     let escrow_balance = balance;
 
     let escrow = Escrow {
-        arbiter: deps.api.addr_canonicalize(&msg.arbiter)?,
-        recipient: deps.api.addr_canonicalize(&msg.recipient)?,
-        source: deps.api.addr_canonicalize(sender.as_str())?,
+        arbiter: msg.arbiter,
+        recipient: msg.recipient,
+        source: String::from(sender),
         end_height: msg.end_height,
         end_time: msg.end_time,
         balance: escrow_balance,
@@ -172,9 +171,9 @@ fn query_details(
 
     let details = DetailsResponse {
         id,
-        arbiter: deps.api.addr_humanize(&escrow.arbiter)?,
-        recipient: deps.api.addr_humanize(&escrow.recipient)?,
-        source: deps.api.addr_humanize(&escrow.source)?,
+        arbiter:escrow.arbiter,
+        recipient: escrow.recipient,
+        source: escrow.source,
         end_height: escrow.end_height,
         end_time: escrow.end_time,
         balance: escrow.balance
@@ -182,19 +181,22 @@ fn query_details(
     Ok(details)
 }
 
-fn query_list(
-    deps: Deps
-) ->  StdResult<ListResponse> {
-    Ok(ListResponse {
-        escrows: all_escrow_ids(deps.storage)?,
-    })
-}
+// fn query_list(
+//     deps: Deps
+// ) ->  StdResult<ListResponse> {
+//     Ok( 
+//         ListResponse{
+//             escrows: all_escrow_ids(deps.storage).unwrap()
+//         },
+//     )
+// }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use cosmwasm_std::{coins, CosmosMsg};
+    use cosmwasm_std::testing::MockApi;
 
     #[test]
     fn create_and_approve_escrow() {
@@ -225,9 +227,9 @@ mod tests {
             details,
             DetailsResponse {
                 id: id.clone(),
-                arbiter: arbiter.clone(),
-                recipient: recipient.clone(),
-                source: source.clone(),
+                arbiter: arbiter.clone().to_string(),
+                recipient: recipient.clone().to_string(),
+                source: source.clone().to_string(),
                 end_height: Some(123456),
                 end_time: None,
                 balance: balance.clone()
@@ -255,5 +257,12 @@ mod tests {
                 amount: balance.clone(),
             })
         );
+
+        // let human_addr = api.addr_humanize(&canonical_addr);
+        // assert!(canonical_addr, human_addr);
+        // let ids = all_escrow_ids(&deps.storage);
+        // panic!("ids: {:?}", ids);
+        // let query_res = query_list(deps.as_ref()).unwrap().escrows;
+        // assert_eq!(query_res, vec!["foo".to_string()]);
     }
 }

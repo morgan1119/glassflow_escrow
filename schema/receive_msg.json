@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ExecuteMsg",
+  "title": "ReceiveMsg",
   "oneOf": [
     {
       "type": "object",
@@ -15,46 +15,7 @@
       "additionalProperties": false
     },
     {
-      "type": "object",
-      "required": [
-        "approve"
-      ],
-      "properties": {
-        "approve": {
-          "type": "object",
-          "required": [
-            "id"
-          ],
-          "properties": {
-            "id": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "type": "object",
-      "required": [
-        "refund"
-      ],
-      "properties": {
-        "refund": {
-          "type": "object",
-          "required": [
-            "id"
-          ],
-          "properties": {
-            "id": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "additionalProperties": false
-    },
-    {
+      "description": "Adds all sent native tokens to the contract",
       "type": "object",
       "required": [
         "top_up"
