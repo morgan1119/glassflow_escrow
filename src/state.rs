@@ -1,11 +1,10 @@
-use cosmwasm_std::{ Env, Storage, Coin, StdResult, Response, Order};
-use cosmwasm_storage::{bucket_read, bucket, prefixed, ReadonlyBucket};
+use cosmwasm_std::{ Env, Storage, Coin, StdResult};
+use cosmwasm_storage::{bucket_read, bucket, prefixed};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::error::ContractError;
-
-// use cw20_atomic_swap::balance::Balance;
+use cw20::{ Balance, Cw20CoinVerified };
 
 const PREFIX_ESCROW: &[u8] = b"liability";
 
@@ -16,7 +15,7 @@ pub struct Escrow {
     pub source: String,
     pub end_height: Option<u64>,
     pub end_time: Option<u64>,
-    pub balance: Vec<Coin>,
+    pub balance: GenericBalance,
     // pub whitelist: Vec<CanonicalAddr>
 }
 
@@ -53,26 +52,62 @@ pub fn escrows_update(
     storage: &mut dyn Storage,
     escrow: Escrow,
     id: &String
-) ->  Result<Response, ContractError> {
-
-    let res = bucket(storage, PREFIX_ESCROW).update(id.as_bytes(), | existing | match existing {
+) ->  Result<Escrow, ContractError> {
+    bucket(storage, PREFIX_ESCROW).update(id.as_bytes(), | existing | match existing {
         None => Ok(escrow),
         Some(_) => Err(ContractError::IdAlreadyExists{}),
-    });
-
-    match res {
-        Ok(_) => Ok(Response::default()),
-        Err(x) => Err(x)
-    }
+    })
 }
 
 pub fn escrows_remove(
     storage: &mut dyn Storage,
     id: &String,
-) -> Result<Response, ContractError> {
+) -> StdResult<()> {
     prefixed(storage, PREFIX_ESCROW).remove(id.as_bytes());
-    Ok(Response::default())
+    Ok(())
 }
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug, Default)]
+pub struct GenericBalance {
+    pub native: Vec<Coin>,
+    pub cw20: Vec<Cw20CoinVerified>,
+}
+
+impl GenericBalance {
+    pub fn add_tokens(&mut self, add: Balance) {
+        match add {
+            Balance::Native(balance) => {
+                for token in balance.0 {
+                    let index = self.native.iter().enumerate().find_map(|(i, exist)| {
+                        if exist.denom == token.denom {
+                            Some(i)
+                        } else {
+                            None
+                        }
+                    });
+                    match index {
+                        Some(idx) => self.native[idx].amount += token.amount,
+                        None => self.native.push(token),
+                    }
+                }
+            }
+            Balance::Cw20(token) => {
+                let index = self.cw20.iter().enumerate().find_map(|(i, exist)| {
+                    if exist.address == token.address {
+                        Some(i)
+                    } else {
+                        None
+                    }
+                });
+                match index {
+                    Some(idx) => self.cw20[idx].amount += token.amount,
+                    None => self.cw20.push(token),
+                }
+            }
+        };
+    }
+}
+
 
 // pub fn all_escrow_ids(
 //     storage: &dyn Storage,

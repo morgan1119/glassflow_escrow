@@ -1,6 +1,7 @@
-use cosmwasm_std::{Addr, Coin};
+use cosmwasm_std::{ Addr, Coin };
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{ Deserialize, Serialize };
+use cw20::{ Cw20Coin, Cw20ReceiveMsg };
 
 #[derive(Serialize, Deserialize, JsonSchema)]
 pub struct InstantiateMsg {}
@@ -55,9 +56,9 @@ pub enum ExecuteMsg {
     },
     TopUp {
         id: String,
-    }
+    },
     // This accepts a properly-encoded ReceiveMsg from a cw20 contract
-    // Receive(Cw20ReceiveMsg),
+    Receive(Cw20ReceiveMsg),
 }
 
 
@@ -94,7 +95,9 @@ pub struct DetailsResponse {
     /// Once an escrow is expired, it can be returned to the original funder (via "refund").
     pub end_time: Option<u64>,
     /// Balance in native tokens
-    pub balance: Vec<Coin>,
+    pub native_balance: Vec<Coin>,
+    /// Balance in cw20 tokens
+    pub cw20_balance: Vec<Cw20Coin>,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
