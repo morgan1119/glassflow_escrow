@@ -19,9 +19,9 @@ pub struct CreateMsg {
     /// block time exceeds this value, the escrow is expired.
     /// Once an escrow is expired, it can be returned to the original funder (via "refund").
     pub end_time: Option<u64>,
-    // pub whitelist: Option<Vec<Addr>> // to avoid DoS attack
+    // pub whitelist: <Vec<String>> // to avoid DoS attack
+    pub cw20_whitelist: Option<Vec<String>>
 }
-
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -32,15 +32,6 @@ pub enum ReceiveMsg {
         id: String,
     },
 }
-
-// impl InstantiateMsg {
-//     pub fn canonical_whitelist<A: Api>(&self, api: &A) -> StdResult<Vec<CanonicalAddr>> {
-//         match self.whitelist.as_ref() {
-//             Some(v) => v.iter().map(|h| api.addr_canonicalize(h.as_str())).collect(),
-//             None => Ok(vec![])
-//         }
-//     }
-// }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -98,6 +89,8 @@ pub struct DetailsResponse {
     pub native_balance: Vec<Coin>,
     /// Balance in cw20 tokens
     pub cw20_balance: Vec<Cw20Coin>,
+    /// Whitelisted cw20 tokens
+    pub cw20_whitelist: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]

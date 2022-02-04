@@ -82,6 +82,8 @@ pub fn try_create(
         return Err(ContractError::ZeroBalance{})
     }
 
+    let mut cw20_whitelist = msg.cw20_whitelist.unwrap_or_else(|| vec![]);
+
     let escrow_balance = match balance {
         Balance::Native(balance) => GenericBalance {
             native: balance.0,
@@ -89,9 +91,12 @@ pub fn try_create(
         },
         Balance::Cw20(token) => {
             // make sure the token sent is on the whitelist by default
+            if !cw20_whitelist.iter().any(|t| t == &token.address.to_string()) {
+                cw20_whitelist.push(token.address.to_string());
+            }
             GenericBalance {
                 native: vec![],
-                cw20: vec![token],
+                cw20: vec![token.clone()],
             }
         }
     };
@@ -103,6 +108,7 @@ pub fn try_create(
         end_height: msg.end_height,
         end_time: msg.end_time,
         balance: escrow_balance,
+        cw20_whitelist,
     };
 
     // try to store it, fail if the id was already in use
@@ -210,7 +216,14 @@ fn try_top_up(
     }
 
     let mut escrow = escrows_read( deps.storage, &id)?;
-    
+
+    if let Balance::Cw20(token) = &balance {
+        // ensure the token is on the whitelist
+        if !escrow.cw20_whitelist.iter().any(|t| t == &token.address.to_string()) {
+            return Err(ContractError::UnregisteredTokens{});
+        }
+    };
+
     escrow.balance.add_tokens(balance);
 
     escrows_save(deps.storage, &escrow, &id)?;
@@ -246,7 +259,8 @@ fn query_details(
         end_height: escrow.end_height,
         end_time: escrow.end_time,
         native_balance,
-        cw20_balance: cw20_balance?
+        cw20_balance: cw20_balance?,
+        cw20_whitelist: escrow.cw20_whitelist,
     };
     Ok(details)
 }
@@ -283,6 +297,7 @@ mod tests {
             recipient: recipient.clone().into(),
             end_time: None,
             end_height: Some(123456),
+            cw20_whitelist: None,
         };
         let balance = coins(100, "tokens");
         let info = mock_info("sender", &balance);
@@ -302,7 +317,8 @@ mod tests {
                 end_height: Some(123456),
                 end_time: None,
                 native_balance: balance.clone(), 
-                cw20_balance: vec![]
+                cw20_balance: vec![],
+                cw20_whitelist: vec![],
             }
         );
 
@@ -329,6 +345,7 @@ mod tests {
         );
     }
 
+    #[test]
     fn create_and_approve_escrow_with_cw20() {
         let env = mock_env();
         let mut deps = mock_dependencies();
@@ -337,7 +354,7 @@ mod tests {
         let arbiter = String::from("arbiter");
         let recipient = String::from("recipient");
         let source = String::from("sender");
-        let token_contract_addr = String::from("token_contract");
+        let token_contract_addr = String::from("my-token");
         let info = mock_info(token_contract_addr.as_str(), &vec![]);
 
         let crt_msg = CreateMsg {
@@ -346,6 +363,7 @@ mod tests {
             recipient: recipient.clone().into(),
             end_time: None,
             end_height: Some(123456),
+            cw20_whitelist: Some(vec![String::from("other-token")]),
         };
         let rev_msg = Cw20ReceiveMsg {
             sender: source.clone(),
@@ -369,7 +387,11 @@ mod tests {
                 cw20_balance: vec![Cw20Coin{
                     address: token_contract_addr.clone(),
                     amount: Uint128::from(100u128),
-                }]
+                }],
+                cw20_whitelist: vec![
+                    String::from("other-token"),
+                    String::from("my-token")
+                ],
             }
         );
 

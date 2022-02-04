@@ -23,4 +23,7 @@ pub enum ContractError {
 
     #[error("escrow id already in use")]
     IdAlreadyExists {},
+
+    #[error("Only accepts tokens on the cw20_whitelist")]
+    UnregisteredTokens {},
 }

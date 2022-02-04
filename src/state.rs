@@ -16,7 +16,7 @@ pub struct Escrow {
     pub end_height: Option<u64>,
     pub end_time: Option<u64>,
     pub balance: GenericBalance,
-    // pub whitelist: Vec<CanonicalAddr>
+    pub cw20_whitelist: Vec<String>
 }
 
 impl Escrow {
