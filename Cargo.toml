@@ -32,11 +32,9 @@ cosmwasm-storage = "1.0.0-beta"
 schemars = "0.8"
 thiserror = "1.0.23"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-# rand = { git = "https://github.com/rust-lang-nursery/rand" }
 cw20 = "0.11.1"
 cw20-atomic-swap = "0.11.1"
 cw2 = "0.11.1"
-# cw20-pot = { git = "https://github.com/InterWasm/cw-contracts/tree/main/contracts/cw20-pot", branch = "main"}
 
 [dev-dependencies]
 cosmwasm-vm = "1.0.0-beta"

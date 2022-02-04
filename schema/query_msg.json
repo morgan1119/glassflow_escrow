@@ -3,20 +3,7 @@
   "title": "QueryMsg",
   "oneOf": [
     {
-      "description": "Show all open escrows. Return type is ListResponse.",
-      "type": "object",
-      "required": [
-        "list"
-      ],
-      "properties": {
-        "list": {
-          "type": "object"
-        }
-      },
-      "additionalProperties": false
-    },
-    {
-      "description": "Returns a human-readable representation of the arbiter.",
+      "description": "Show all open escrows. Return type is ListResponse. Returns a human-readable representation of the arbiter.",
       "type": "object",
       "required": [
         "details"
