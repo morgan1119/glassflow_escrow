@@ -78,7 +78,7 @@ pub fn try_create(
     balance: Balance,
     sender: String,
 ) -> Result<Response, ContractError>{
-    
+
     // this fails if no fund is sent from the receiver
     if balance.is_empty() {
         return Err(ContractError::ZeroBalance{})
@@ -96,6 +96,7 @@ pub fn try_create(
             if !cw20_whitelist.iter().any(|t| t == &token.address.to_string()) {
                 cw20_whitelist.push(token.address.to_string());
             }
+            
             GenericBalance {
                 native: vec![],
                 cw20: vec![token.clone()],
