@@ -31,6 +31,7 @@ pub fn execute(
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
+    
     // let state = config_read(deps.storage).load()?;
     match msg {
         ExecuteMsg::Create(msg) => try_create(deps, msg, Balance::from(info.funds), info.sender.to_string()),  // create an escrow with coins
