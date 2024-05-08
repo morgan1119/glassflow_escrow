@@ -133,7 +133,6 @@ fn try_approve(
     if  escrow.arbiter != info.sender.as_str() {
         return Err(ContractError::Unauthorized {});
     }
-    
     else if escrow.is_expired(&env) {   // throws error if state is expired
         return Err(ContractError::Expired {
             end_height: escrow.end_height,
