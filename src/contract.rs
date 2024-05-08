@@ -96,7 +96,7 @@ pub fn try_create(
             if !cw20_whitelist.iter().any(|t| t == &token.address.to_string()) {
                 cw20_whitelist.push(token.address.to_string());
             }
-            
+
             GenericBalance {
                 native: vec![],
                 cw20: vec![token.clone()],
@@ -132,7 +132,8 @@ fn try_approve(
 
     if  escrow.arbiter != info.sender.as_str() {
         return Err(ContractError::Unauthorized {});
-    }   
+    }
+    
     else if escrow.is_expired(&env) {   // throws error if state is expired
         return Err(ContractError::Expired {
             end_height: escrow.end_height,
